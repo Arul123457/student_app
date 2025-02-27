@@ -4,7 +4,13 @@ import pandas as pd
 import numpy as np
 import pickle
 from sklearn.preprocessing import StandardScaler,LabelEncoder
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
+uri = "mongodb+srv://Arutselvan:Arul1807@cluster0.yfbd6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+client = MongoClient(uri, server_api=ServerApi('1'))
+db = client['Student']
+collection = db['Student_pred']
 
 def load_model():
     with open("student_lr_model.pkl",'rb') as file:
@@ -32,7 +38,7 @@ def main():
     extra = st.selectbox("Extra Curricular Activity" , ['Yes','No'])
     sleeping_hour = st.number_input('Sleeping Hours',min_value = 4, max_value = 10, value = 7)
     number_of_paper_solved = st.number_input('Number of Question Paper Solved',min_value = 0, max_value = 10, value = 5)
-
+ 
     if st.button("Predict-Your-Score"):
         user_data = {
             "Hours Studied":hour_studied,
@@ -43,6 +49,9 @@ def main():
         }
         prediction = predict_data(user_data)
         st.success(f"Your Prediction Result is {prediction}")
+        user_data['Prediction'] = round(float(prediction[0]),2)
+        user_data = {key: int(value) if isinstance(value, np.integer) else float(value) if isinstance(value,np.floating) else value for key, value in user_data.items()}
+        collection.insert_one(user_data)
 
 if __name__ == "__main__":
     main()
